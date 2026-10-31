@@ -33,6 +33,9 @@ ball = pygame.Rect(0, 0, BALL_SIZE, BALL_SIZE)
 # Scores
 left_score, right_score = 0, 0
 
+# Font
+TEXT_COLOR = (255, 255, 255)
+font = pygame.font.Font(None, 50)
 
 def paddle_moves(paddle, keys, up, down):
     if keys[up]:
@@ -87,19 +90,29 @@ while running:
 
     if ball.left < 0:
         right_score += 1
-        print(left_score, right_score)
         reset_ball()
 
     if ball.right > WIDTH:
         left_score += 1
-        print(left_score, right_score)
         reset_ball()
 
     # --- DRAWING ---
     screen.fill((0, 0, 0))
-    pygame.draw.rect(screen, (255, 255, 255), left_paddle)
-    pygame.draw.rect(screen, (255, 255, 255), right_paddle)
-    pygame.draw.rect(screen, (255, 255, 255), ball)
+    pygame.draw.rect(screen, TEXT_COLOR, left_paddle)
+    pygame.draw.rect(screen, TEXT_COLOR, right_paddle)
+    pygame.draw.rect(screen, TEXT_COLOR, ball)
+
+    left_score_img = font.render(str(left_score), True, TEXT_COLOR)
+    left_rect = left_score_img.get_rect()
+    left_rect.centerx = 0 + (WIDTH // 2 - 0) // 2
+    left_rect.top = 20
+    screen.blit(left_score_img, left_rect)
+
+    right_score_img = font.render(str(right_score), True, TEXT_COLOR)
+    right_rect = right_score_img.get_rect()
+    right_rect.centerx = WIDTH // 2 + (WIDTH - (WIDTH // 2)) // 2
+    right_rect.top = 20
+    screen.blit(right_score_img, right_rect)
 
     pygame.display.flip()
 # --- CLEANUP ---
