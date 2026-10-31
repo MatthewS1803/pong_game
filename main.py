@@ -35,7 +35,7 @@ left_score, right_score = 0, 0
 
 # Font
 TEXT_COLOR = (255, 255, 255)
-font = pygame.font.Font('pong-score.otf', 50)
+font = pygame.font.Font('retro-font.ttf', 40)
 
 def paddle_moves(paddle, keys, up, down):
     if keys[up]:
@@ -113,6 +113,13 @@ while running:
     right_rect.centerx = WIDTH // 2 + (WIDTH - (WIDTH // 2)) // 2
     right_rect.top = 20
     screen.blit(right_score_img, right_rect)
+
+    pong_img = font.render('PONG', True, TEXT_COLOR)
+    pong_rect = pong_img.get_rect()
+    pong_rect.top = 20
+    pong_rect.centerx = WIDTH // 2
+    screen.blit(pong_img, pong_rect)
+
 
     pygame.display.flip()
 # --- CLEANUP ---
