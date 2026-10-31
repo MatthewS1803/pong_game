@@ -8,6 +8,7 @@ clock = pygame.time.Clock()
 
 HEIGHT = 600
 WIDTH = 800
+DASH_LENGTH = 15
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Pong Game')
@@ -28,7 +29,7 @@ right_paddle.centery = HEIGHT // 2
 # Ball 
 BALL_SIZE = 10 
 BALL_SPEED = 4
-ball = pygame.Rect(0, 0, BALL_SIZE, BALL_SIZE)
+MAX_BALL_SPEED_Y = 6
 
 # Scores
 left_score, right_score = 0, 0
@@ -49,14 +50,43 @@ def paddle_moves(paddle, keys, up, down):
     if paddle.bottom > HEIGHT:
         paddle.bottom = HEIGHT
 
-def reset_ball():
-    global ball_speed_x, ball_speed_y
-    ball.centerx = WIDTH // 2 + random.randint(-20, 20)
-    ball.centery = HEIGHT // 2 + random.randint(-150, 150)
-    ball_speed_x = BALL_SPEED * random.choice([-1, 1])
-    ball_speed_y = BALL_SPEED * random.choice([-1, 1])
-    
-reset_ball()
+class Ball:
+    def __init__(self):
+        self.rect = pygame.Rect(0, 0, BALL_SIZE, BALL_SIZE)
+        self.reset()
+
+    def reset(self):
+        self.rect.centerx = WIDTH // 2 + random.randint(-20, 20)
+        self.rect.centery = HEIGHT // 2 + random.randint(-150, 150)
+        self.speed_x = BALL_SPEED * random.choice([-1, 1])
+        self.speed_y = random.randint(0, BALL_SPEED) * random.choice([-1, 1])
+
+    def move(self):
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
+
+        if self.rect.top < 0 or self.rect.bottom > HEIGHT:
+            self.speed_y *= -1
+
+    def bounce_off_paddle(self, paddle):
+        if self.rect.colliderect(paddle) and self.speed_x < 0:
+            self.speed_x *= -1
+            self.rect.left = paddle.right
+            offset = self.rect.centery - paddle.centery
+            normalized = offset / (PADDLE_HEIGHT // 2)
+            final_speed = normalized * MAX_BALL_SPEED_Y
+            self.speed_y = round(final_speed)
+
+        if self.rect.colliderect(paddle) and self.speed_x > 0:
+            self.speed_x *= -1
+            self.rect.right = paddle.left
+            offset = self.rect.centery - paddle.centery
+            normalized = offset / (PADDLE_HEIGHT // 2)
+            final_speed = normalized * MAX_BALL_SPEED_Y
+            self.speed_y = round(final_speed)
+
+
+ball = Ball()
 
 # --- GAME LOOP ---
 running = True
@@ -74,27 +104,18 @@ while running:
     paddle_moves(left_paddle, keys, pygame.K_w, pygame.K_s)
     paddle_moves(right_paddle, keys, pygame.K_UP, pygame.K_DOWN)
 
-    ball.x += ball_speed_x
-    ball.y += ball_speed_y
+    ball.move()
+    ball.bounce_off_paddle(left_paddle)
+    ball.bounce_off_paddle(right_paddle)
+          
 
-    if ball.top < 0 or ball.bottom > HEIGHT:
-        ball_speed_y *= -1
-        
-    if ball.colliderect(left_paddle) and ball_speed_x < 0:
-        ball_speed_x *= -1
-        ball.left = left_paddle.right
-
-    if ball.colliderect(right_paddle) and ball_speed_x > 0:
-        ball_speed_x *= -1
-        ball.right = right_paddle.left
-
-    if ball.left < 0:
+    if ball.rect.left < 0:
         right_score += 1
-        reset_ball()
+        ball.reset()
 
-    if ball.right > WIDTH:
+    if ball.rect.right > WIDTH:
         left_score += 1
-        reset_ball()
+        ball.reset()
 
     # --- DRAWING ---
     screen.fill((0, 0, 0))
@@ -120,6 +141,10 @@ while running:
     pong_rect.centerx = WIDTH // 2
     screen.blit(pong_img, pong_rect)
 
+    for y in range(0, HEIGHT, 30):
+        pygame.draw.line(screen, TEXT_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
+
+    # pygame.draw.line(screen, TEXT_COLOR, (WIDTH // 2, 0), (WIDTH // 2, HEIGHT), 2)
 
     pygame.display.flip()
 # --- CLEANUP ---
