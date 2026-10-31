@@ -54,29 +54,6 @@ while running:
 
     paddle_moves(left_paddle, keys, pygame.K_w, pygame.K_s)
     paddle_moves(right_paddle, keys, pygame.K_UP, pygame.K_DOWN)
-
-    if keys[pygame.K_w]:
-        left_paddle.y -= PADDLE_SPEED
-    if keys[pygame.K_s]:
-        left_paddle.y += PADDLE_SPEED
-
-    if left_paddle.y < 0:
-        left_paddle.y = 0
-
-    if left_paddle.bottom > HEIGHT:
-        left_paddle.bottom = HEIGHT
-
-    if keys[pygame.K_UP]:
-        right_paddle.y -= PADDLE_SPEED
-    if keys[pygame.K_DOWN]:
-        right_paddle.y += PADDLE_SPEED
-
-    if right_paddle.y < 0:
-        right_paddle.y = 0
-
-    if right_paddle.bottom > HEIGHT:
-        right_paddle.bottom = HEIGHT
-
     
 
     # --- DRAWING ---
