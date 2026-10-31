@@ -35,7 +35,7 @@ left_score, right_score = 0, 0
 
 # Font
 TEXT_COLOR = (255, 255, 255)
-font = pygame.font.Font(None, 50)
+font = pygame.font.Font('pong-score.otf', 50)
 
 def paddle_moves(paddle, keys, up, down):
     if keys[up]:
