@@ -69,9 +69,12 @@ def draw_text(text, centerx, centery=None, top=TEXT_TOP, text_font=font):
 class Paddle:
     def __init__(self, x, up, down):
         self.rect = pygame.Rect(x, 0, PADDLE_WIDTH, PADDLE_HEIGHT)
-        self.rect.centery = HEIGHT // 2
         self.up = up
         self.down = down
+        self.reset()
+
+    def reset(self):
+        self.rect.centery = HEIGHT // 2
 
     def move(self, keys):
         if keys[self.up]:
@@ -133,6 +136,9 @@ class Ball:
 
 class Scoreboard:
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.left_score = 0
         self.right_score = 0
         self.game_over = False
