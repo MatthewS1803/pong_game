@@ -38,9 +38,20 @@ WINNING_SCORE = 11
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Pong Game')
 
+# Game States
+game_state = 'start'
+
 # Font
 font = pygame.font.Font('retro-font.ttf', 40)
 win_font = pygame.font.Font('retro-font.ttf', 30)
+
+# Drawing Text function
+def draw_text(text, centerx, top=TEXT_TOP, text_font=font):
+    text_img = text_font.render(text, True, WHITE_COLOR)
+    text_rect = text_img.get_rect()
+    text_rect.centerx = centerx
+    text_rect.top = top
+    screen.blit(text_img, text_rect)
 
 # Paddle Class
 class Paddle:
@@ -144,14 +155,6 @@ left_paddle = Paddle(20, pygame.K_w, pygame.K_s)
 right_paddle = Paddle(WIDTH - 20 - PADDLE_WIDTH, pygame.K_UP, pygame.K_DOWN)
 ball = Ball()
 scoreboard = Scoreboard()
-
-# Drawing Text function
-def draw_text(text, centerx, top=TEXT_TOP, text_font=font):
-    text_img = text_font.render(text, True, WHITE_COLOR)
-    text_rect = text_img.get_rect()
-    text_rect.centerx = centerx
-    text_rect.top = top
-    screen.blit(text_img, text_rect)
 
 # --- GAME LOOP ---
 running = True
