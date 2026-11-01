@@ -6,30 +6,41 @@ import random
 pygame.init()
 clock = pygame.time.Clock()
 
+
+# CONSTANTS 
 HEIGHT = 600
 WIDTH = 800
+TEXT_TOP = HEIGHT // 30
+
+# Center-line constants
 DASH_LENGTH = 15
+DASH_STEP = 30
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('Pong Game')
-
+# Paddle Constants
 PADDLE_HEIGHT = 100
 PADDLE_WIDTH = 15
 PADDLE_SPEED = 5
 
-# Ball 
+# Ball constants 
 BALL_SIZE = 10 
 BALL_SPEED = 4
 MAX_BALL_SPEED_Y = 6
 MAX_BALL_SPEED_X = 15 # Staying under the 25-pixel limit (paddle width + ball width)
 SPEED_INCREASE = 1
 
-# Scores
-left_score, right_score = 0, 0
+# Color constant
+WHITE_COLOR = (255, 255, 255)
+BLACK_COLOR = (0, 0, 0)
+
+# Winning Score 
+WINNING_SCORE = 11
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption('Pong Game')
 
 # Font
-TEXT_COLOR = (255, 255, 255)
 font = pygame.font.Font('retro-font.ttf', 40)
+win_font = pygame.font.Font('retro-font.ttf', 30)
 
 # Paddle Class
 class Paddle:
@@ -39,7 +50,7 @@ class Paddle:
         self.up = up
         self.down = down
 
-    def moves(self, keys):
+    def move(self, keys):
         if keys[self.up]:
             self.rect.y -= PADDLE_SPEED
 
@@ -52,10 +63,10 @@ class Paddle:
         if self.rect.bottom > HEIGHT:
             self.rect.bottom = HEIGHT
 
-left_paddle = Paddle(20, pygame.K_w, pygame.K_s)
-right_paddle = Paddle(WIDTH - 20 - PADDLE_WIDTH, pygame.K_UP, pygame.K_DOWN)
+    def draw(self, screen):
+        pygame.draw.rect(screen, WHITE_COLOR, self.rect)
 
-# The movements of the ball
+# Ball: position, speed, and bounces
 class Ball:
     def __init__(self):
         self.rect = pygame.Rect(0, 0, BALL_SIZE, BALL_SIZE)
@@ -67,7 +78,7 @@ class Ball:
         self.speed_x = BALL_SPEED * random.choice([-1, 1])
         self.speed_y = random.randint(0, BALL_SPEED) * random.choice([-1, 1])
 
-    def moves(self):
+    def move(self):
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
 
@@ -94,12 +105,59 @@ class Ball:
                 self.rect.right = paddle.left
             self.speed_y = self.hit_angle(paddle)
 
+    def draw(self, screen):
+        pygame.draw.rect(screen, WHITE_COLOR, self.rect)
+
+class Scoreboard:
+    def __init__(self):
+        self.left_score = 0
+        self.right_score = 0
+        self.game_over = False
+
+    def point_for(self, side):
+        if side == 'left':
+            self.left_score += 1
+        elif side == 'right':
+            self.right_score += 1
+
+        if self.left_score >= WINNING_SCORE or self.right_score >= WINNING_SCORE:
+            self.game_over = True
+
+    def winner(self):
+        if not self.game_over:
+            return None
+        else:
+            if self.left_score > self.right_score:
+                return 'left'
+            else:
+                return 'right'
+
+    def draw(self):
+        draw_text(str(self.left_score), 0 + (WIDTH // 2 - 0) // 2)
+        draw_text(str(self.right_score), WIDTH // 2 + (WIDTH - (WIDTH // 2)) // 2)
+        side = self.winner()
+        if side is not None:
+            message = f"{side.capitalize()} player wins"
+            draw_text(message, WIDTH // 2, top=HEIGHT // 2, text_font=win_font)
+
+left_paddle = Paddle(20, pygame.K_w, pygame.K_s)
+right_paddle = Paddle(WIDTH - 20 - PADDLE_WIDTH, pygame.K_UP, pygame.K_DOWN)
 ball = Ball()
+scoreboard = Scoreboard()
+
+# Drawing Text function
+def draw_text(text, centerx, top=TEXT_TOP, text_font=font):
+    text_img = text_font.render(text, True, WHITE_COLOR)
+    text_rect = text_img.get_rect()
+    text_rect.centerx = centerx
+    text_rect.top = top
+    screen.blit(text_img, text_rect)
 
 # --- GAME LOOP ---
 running = True
 while running:
     clock.tick(60)
+    # --- Event Handling ---
     for event in pygame.event.get():
         # Checks if the user clicked the window's close (X) button
         if event.type == pygame.QUIT:
@@ -109,52 +167,37 @@ while running:
     # --- UPDATE ---
     keys = pygame.key.get_pressed()
 
-    left_paddle.moves(keys)
-    right_paddle.moves(keys)
+    if not scoreboard.game_over:
+        left_paddle.move(keys)
+        right_paddle.move(keys)
 
-    ball.moves()
-    ball.bounce_off_paddle(left_paddle.rect)
-    ball.bounce_off_paddle(right_paddle.rect)
-          
+        ball.move()
+        ball.bounce_off_paddle(left_paddle.rect)
+        ball.bounce_off_paddle(right_paddle.rect)
 
-    if ball.rect.left < 0:
-        right_score += 1
-        ball.reset()
+        if ball.rect.left < 0:
+            scoreboard.point_for('right')
+            ball.reset()
 
-    if ball.rect.right > WIDTH:
-        left_score += 1
-        ball.reset()
+        if ball.rect.right > WIDTH:
+            scoreboard.point_for('left')
+            ball.reset()
 
     # --- DRAWING ---
-    screen.fill((0, 0, 0))
-    pygame.draw.rect(screen, TEXT_COLOR, left_paddle.rect)
-    pygame.draw.rect(screen, TEXT_COLOR, right_paddle.rect)
-    pygame.draw.rect(screen, TEXT_COLOR, ball.rect)
+    screen.fill(BLACK_COLOR)
+    left_paddle.draw(screen)
+    right_paddle.draw(screen)
+    ball.draw(screen)
 
-    # Left Score Text
-    left_score_img = font.render(str(left_score), True, TEXT_COLOR)
-    left_rect = left_score_img.get_rect()
-    left_rect.centerx = 0 + (WIDTH // 2 - 0) // 2
-    left_rect.top = 20
-    screen.blit(left_score_img, left_rect)
-
-    # Right Score Text
-    right_score_img = font.render(str(right_score), True, TEXT_COLOR)
-    right_rect = right_score_img.get_rect()
-    right_rect.centerx = WIDTH // 2 + (WIDTH - (WIDTH // 2)) // 2
-    right_rect.top = 20
-    screen.blit(right_score_img, right_rect)
-
-    # 'Pong' Text
-    pong_img = font.render('PONG', True, TEXT_COLOR)
-    pong_rect = pong_img.get_rect()
-    pong_rect.top = 20
-    pong_rect.centerx = WIDTH // 2
-    screen.blit(pong_img, pong_rect)
+    # Scoreboard Text
+    scoreboard.draw()
+    
+    # Pong Text
+    draw_text('PONG', WIDTH // 2)
 
     # Dashed line in the center
-    for y in range(0, HEIGHT, 30):
-        pygame.draw.line(screen, TEXT_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
+    for y in range(0, HEIGHT, DASH_STEP):
+        pygame.draw.line(screen, WHITE_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
 
     pygame.display.flip()
 # --- CLEANUP ---
