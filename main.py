@@ -21,6 +21,11 @@ PADDLE_HEIGHT = 100
 PADDLE_WIDTH = 15
 PADDLE_SPEED = 5
 
+# Button Constants
+BUTTON_WIDTH = 200
+BUTTON_HEIGHT = 60
+BUTTON_BORDER = 3
+
 # Ball constants 
 BALL_SIZE = 10 
 BALL_SPEED = 4
@@ -39,18 +44,25 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Pong Game')
 
 # Game States
+start_button = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
+start_button.centerx = WIDTH // 2
+start_button.centery = HEIGHT // 2
 game_state = 'start'
 
 # Font
 font = pygame.font.Font('retro-font.ttf', 40)
 win_font = pygame.font.Font('retro-font.ttf', 30)
+state_font = pygame.font.Font('retro-font.ttf', 20)
 
 # Drawing Text function
-def draw_text(text, centerx, top=TEXT_TOP, text_font=font):
+def draw_text(text, centerx, centery=None, top=TEXT_TOP, text_font=font):
     text_img = text_font.render(text, True, WHITE_COLOR)
     text_rect = text_img.get_rect()
     text_rect.centerx = centerx
-    text_rect.top = top
+    if centery is not None:
+        text_rect.centery = centery
+    else:
+        text_rect.top = top
     screen.blit(text_img, text_rect)
 
 # Paddle Class
@@ -166,11 +178,13 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+        if event.type == pygame.MOUSEBUTTONDOWN and game_state == 'start' and start_button.collidepoint(event.pos):
+            game_state ='playing'
     
     # --- UPDATE ---
     keys = pygame.key.get_pressed()
 
-    if not scoreboard.game_over:
+    if game_state == 'playing' and not scoreboard.game_over:
         left_paddle.move(keys)
         right_paddle.move(keys)
 
@@ -188,20 +202,32 @@ while running:
 
     # --- DRAWING ---
     screen.fill(BLACK_COLOR)
-    left_paddle.draw(screen)
-    right_paddle.draw(screen)
-    ball.draw(screen)
-
-    # Scoreboard Text
-    scoreboard.draw()
     
-    # Pong Text
-    draw_text('PONG', WIDTH // 2)
+    if game_state == 'start':
+        # Draws the game title
+        draw_text('PONG', WIDTH // 2)
 
-    # Dashed line in the center
-    for y in range(0, HEIGHT, DASH_STEP):
-        pygame.draw.line(screen, WHITE_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
+        # Creates the button 
+        pygame.draw.rect(screen, BLACK_COLOR, start_button)
+        pygame.draw.rect(screen, WHITE_COLOR, start_button, BUTTON_BORDER)
+        
+        # Draws the button
+        draw_text('START', start_button.centerx, centery=start_button.centery, text_font=state_font)
+    else:
+        # Draws the paddles 
+        left_paddle.draw(screen)
+        right_paddle.draw(screen)
 
+        # Draws the ball
+        ball.draw(screen)
+
+        # Draws the scoreboard
+        scoreboard.draw()
+
+        # Dashed line in the center
+        for y in range(0, HEIGHT, DASH_STEP):
+            pygame.draw.line(screen, WHITE_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
+    
     pygame.display.flip()
 # --- CLEANUP ---
 pygame.quit()
