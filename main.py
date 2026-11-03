@@ -38,7 +38,11 @@ WHITE_COLOR = (255, 255, 255)
 BLACK_COLOR = (0, 0, 0)
 
 # Winning Score 
-WINNING_SCORE = 11
+WINNING_SCORE = 5
+
+# Centers for both side
+LEFT_HALF_X = 0 + (WIDTH // 2 - 0) // 2
+RIGHT_HALF_X = WIDTH // 2 + (WIDTH - (WIDTH // 2)) // 2
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Pong Game')
@@ -166,12 +170,12 @@ class Scoreboard:
                 return 'right'
 
     def draw(self):
-        draw_text(str(self.left_score), 0 + (WIDTH // 2 - 0) // 2)
-        draw_text(str(self.right_score), WIDTH // 2 + (WIDTH - (WIDTH // 2)) // 2)
+        draw_text(str(self.left_score), LEFT_HALF_X)
+        draw_text(str(self.right_score), RIGHT_HALF_X)
         side = self.winner()
         if side is not None:
             message = f"{side.capitalize()} player wins"
-            draw_text(message, WIDTH // 2, top=HEIGHT // 2, text_font=win_font)
+            draw_text(message, WIDTH // 2, top=HEIGHT // 2 , text_font=win_font)
 
 left_paddle = Paddle(20, pygame.K_w, pygame.K_s)
 right_paddle = Paddle(WIDTH - 20 - PADDLE_WIDTH, pygame.K_UP, pygame.K_DOWN)
@@ -196,11 +200,12 @@ while running:
             left_paddle.reset()
             right_paddle.reset()
             ball.reset()
+            game_state = 'playing'
     
     # --- UPDATE ---
     keys = pygame.key.get_pressed()
 
-    if game_state == 'playing' and not scoreboard.game_over:
+    if game_state == 'playing':
         left_paddle.move(keys)
         right_paddle.move(keys)
 
@@ -226,11 +231,11 @@ while running:
         # Draws the game title
         draw_text('PONG', WIDTH // 2)
 
-        # Creates the button 
+        # Creates the start button 
         pygame.draw.rect(screen, BLACK_COLOR, start_button)
         pygame.draw.rect(screen, WHITE_COLOR, start_button, BUTTON_BORDER)
         
-        # Draws the button
+        # Draws the start button
         draw_text('START', start_button.centerx, centery=start_button.centery, text_font=state_font)
     else:
         # Draws the paddles 
@@ -243,17 +248,18 @@ while running:
         # Draws the scoreboard
         scoreboard.draw()
 
+        # Dashed line in the center
+        for y in range(0, HEIGHT, DASH_STEP):
+            pygame.draw.line(screen, WHITE_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
+
         if game_state == 'game_over':
             # Creates restart button
             pygame.draw.rect(screen, BLACK_COLOR, restart_button)
             pygame.draw.rect(screen, WHITE_COLOR, restart_button, BUTTON_BORDER)
 
+            # Draws the resetart button
             draw_text('RESTART', restart_button.centerx, centery=restart_button.centery, text_font=state_font)
 
-        # Dashed line in the center
-        for y in range(0, HEIGHT, DASH_STEP):
-            pygame.draw.line(screen, WHITE_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
-    
     pygame.display.flip()
 # --- CLEANUP ---
 pygame.quit()
