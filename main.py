@@ -6,6 +6,7 @@ import random
 pygame.init()
 clock = pygame.time.Clock()
 
+
 # Font
 font = pygame.font.Font('retro-font.ttf', 40)
 win_font = pygame.font.Font('retro-font.ttf', 25)
@@ -52,12 +53,17 @@ MESSAGE_GAP = 10
 STACK_SPACING = 20
 MESSAGE_Y = TEXT_TOP + font.get_height() + MESSAGE_GAP + win_font.get_height() // 2
 STACK_GAP = (win_font.get_height() // 2) + STACK_SPACING + (BUTTON_HEIGHT // 2)
+STEP = BUTTON_HEIGHT + STACK_SPACING
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Pong Game')
+overlay = pygame.Surface((WIDTH, HEIGHT))
+overlay.set_alpha(150)
+overlay.fill(BLACK_COLOR)
 
 # Game States
 game_state = 'menu'
+running = True
 
 def reset_game():
     scoreboard.reset()
@@ -218,9 +224,15 @@ restart_button = Button('RESTART', MIDDLE, MESSAGE_Y + STACK_GAP)
 menu_button = Button('MAIN MENU', MIDDLE, restart_button.rect.centery + BUTTON_HEIGHT + STACK_SPACING)
 quit_button = Button('QUIT', MIDDLE, start_button.rect.centery + BUTTON_HEIGHT + STACK_SPACING)
 
+# Pause Buttons
+pause_menu_button = Button('MAIN MENU', MIDDLE, HEIGHT // 2)
+resume_button = Button('RESUME', MIDDLE, pause_menu_button.rect.centery - STEP)
+pause_quit_button = Button('QUIT', MIDDLE, pause_menu_button.rect.centery + STEP)
+
+# Settings Button
+# settings_button will do later
 
 # --- GAME LOOP ---
-running = True
 while running:
     clock.tick(60)
     # --- Event Handling ---
@@ -228,6 +240,12 @@ while running:
         # Checks if the user clicked the window's close (X) button
         if event.type == pygame.QUIT:
             running = False
+
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                if game_state == 'playing':
+                    game_state = 'paused'
+                elif game_state == 'paused':
+                    game_state == 'playing'
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if game_state == 'menu':
@@ -240,6 +258,14 @@ while running:
                     reset_game()
                     game_state = 'playing'
                 elif menu_button.clicked(event.pos):
+                    reset_game()
+                    game_state = 'menu'
+            elif game_state == 'paused':
+                if resume_button.clicked(event.pos):
+                    game_state = 'playing'
+                elif pause_quit_button.clicked(event.pos):
+                    running = False
+                elif pause_menu_button.clicked(event.pos):
                     reset_game()
                     game_state = 'menu'
         
@@ -302,6 +328,10 @@ while running:
             # Creates restart and main menu button
             restart_button.draw(screen)
             menu_button.draw(screen)
+        elif game_state == 'paused':
+            pause_menu_button.draw(screen)
+            resume_button.draw(screen)
+            pause_quit_button.draw(screen)
 
     pygame.display.flip()
 # --- CLEANUP ---
