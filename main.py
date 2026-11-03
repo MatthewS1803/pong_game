@@ -6,6 +6,10 @@ import random
 pygame.init()
 clock = pygame.time.Clock()
 
+# Font
+font = pygame.font.Font('retro-font.ttf', 40)
+win_font = pygame.font.Font('retro-font.ttf', 25)
+state_font = pygame.font.Font('retro-font.ttf', 20)
 
 # CONSTANTS 
 HEIGHT = 600
@@ -38,11 +42,15 @@ WHITE_COLOR = (255, 255, 255)
 BLACK_COLOR = (0, 0, 0)
 
 # Winning Score 
-WINNING_SCORE = 5
+WINNING_SCORE = 2
 
 # Centers for both side
-LEFT_HALF_X = 0 + (WIDTH // 2 - 0) // 2
-RIGHT_HALF_X = WIDTH // 2 + (WIDTH - (WIDTH // 2)) // 2
+LEFT_HALF_X = WIDTH // 4
+RIGHT_HALF_X = WIDTH // 2 + (WIDTH // 4)
+MESSAGE_GAP = 10
+STACK_SPACING = 20
+MESSAGE_Y = TEXT_TOP + font.get_height() + MESSAGE_GAP + win_font.get_height() // 2
+STACK_GAP = (win_font.get_height() // 2) + STACK_SPACING + (BUTTON_HEIGHT // 2)
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Pong Game')
@@ -51,16 +59,21 @@ pygame.display.set_caption('Pong Game')
 start_button = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
 start_button.centerx = WIDTH // 2
 start_button.centery = HEIGHT // 2
-game_state = 'start'
+game_state = 'menu'
 
 restart_button = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
 restart_button.centerx = WIDTH // 2
-restart_button.centery = (HEIGHT // 2) + 80
+restart_button.centery = MESSAGE_Y + STACK_GAP
 
-# Font
-font = pygame.font.Font('retro-font.ttf', 40)
-win_font = pygame.font.Font('retro-font.ttf', 30)
-state_font = pygame.font.Font('retro-font.ttf', 20)
+menu_button = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
+menu_button.centerx = WIDTH // 2
+menu_button.centery = restart_button.centery + BUTTON_HEIGHT + STACK_SPACING
+
+def reset_game():
+    scoreboard.reset()
+    left_paddle.reset()
+    right_paddle.reset()
+    ball.reset()
 
 # Drawing Text function
 def draw_text(text, centerx, centery=None, top=TEXT_TOP, text_font=font):
@@ -175,8 +188,9 @@ class Scoreboard:
         side = self.winner()
         if side is not None:
             message = f"{side.capitalize()} player wins"
-            draw_text(message, WIDTH // 2, top=HEIGHT // 2 , text_font=win_font)
-
+            message_x = LEFT_HALF_X if side == 'left' else RIGHT_HALF_X
+            draw_text(message, message_x, centery=MESSAGE_Y, text_font=win_font)
+    
 left_paddle = Paddle(20, pygame.K_w, pygame.K_s)
 right_paddle = Paddle(WIDTH - 20 - PADDLE_WIDTH, pygame.K_UP, pygame.K_DOWN)
 ball = Ball()
@@ -192,15 +206,17 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        if event.type == pygame.MOUSEBUTTONDOWN and game_state == 'start' and start_button.collidepoint(event.pos):
-            game_state ='playing'
-
-        if event.type == pygame.MOUSEBUTTONDOWN and game_state == 'game_over' and restart_button.collidepoint(event.pos):
-            scoreboard.reset()
-            left_paddle.reset()
-            right_paddle.reset()
-            ball.reset()
-            game_state = 'playing'
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if game_state == 'menu' and start_button.collidepoint(event.pos):
+                game_state = 'playing'
+            elif game_state == 'game_over':
+                if restart_button.collidepoint(event.pos):
+                    reset_game()
+                    game_state = 'playing'
+                elif menu_button.collidepoint(event.pos):
+                    reset_game()
+                    game_state = 'menu'
+        
     
     # --- UPDATE ---
     keys = pygame.key.get_pressed()
@@ -223,11 +239,18 @@ while running:
 
         if scoreboard.game_over:
             game_state = 'game_over'
+            winner_side = scoreboard.winner()
+            if winner_side == 'left':
+                restart_button.centerx = LEFT_HALF_X
+                menu_button.centerx = LEFT_HALF_X
+            else:
+                restart_button.centerx = RIGHT_HALF_X
+                menu_button.centerx = RIGHT_HALF_X
 
     # --- DRAWING ---
     screen.fill(BLACK_COLOR)
     
-    if game_state == 'start':
+    if game_state == 'menu':
         # Draws the game title
         draw_text('PONG', WIDTH // 2)
 
@@ -253,12 +276,15 @@ while running:
             pygame.draw.line(screen, WHITE_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
 
         if game_state == 'game_over':
-            # Creates restart button
+            # Creates restart and main menu button
             pygame.draw.rect(screen, BLACK_COLOR, restart_button)
             pygame.draw.rect(screen, WHITE_COLOR, restart_button, BUTTON_BORDER)
+            pygame.draw.rect(screen, BLACK_COLOR, menu_button)
+            pygame.draw.rect(screen, WHITE_COLOR, menu_button, BUTTON_BORDER)
 
-            # Draws the resetart button
+            # Draws the restart and main menu button
             draw_text('RESTART', restart_button.centerx, centery=restart_button.centery, text_font=state_font)
+            draw_text('MAIN MENU', menu_button.centerx, centery=menu_button.centery, text_font=state_font)
 
     pygame.display.flip()
 # --- CLEANUP ---
