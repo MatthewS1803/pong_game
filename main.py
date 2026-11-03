@@ -329,6 +329,7 @@ while running:
             restart_button.draw(screen)
             menu_button.draw(screen)
         elif game_state == 'paused':
+            screen.blit(overlay, (0, 0))
             pause_menu_button.draw(screen)
             resume_button.draw(screen)
             pause_quit_button.draw(screen)
