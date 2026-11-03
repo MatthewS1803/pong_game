@@ -28,7 +28,7 @@ PADDLE_SPEED = 5
 # Button Constants
 BUTTON_WIDTH = 200
 BUTTON_HEIGHT = 60
-BUTTON_BORDER = 3
+BUTTON_BORDER = 5
 
 # Ball constants 
 BALL_SIZE = 10 
@@ -37,16 +37,17 @@ MAX_BALL_SPEED_Y = 6
 MAX_BALL_SPEED_X = 15 # Staying under the 25-pixel limit (paddle width + ball width)
 SPEED_INCREASE = 1
 
-# Color constant
+# COLORS
 WHITE_COLOR = (255, 255, 255)
 BLACK_COLOR = (0, 0, 0)
 
 # Winning Score 
 WINNING_SCORE = 2
 
-# Centers for both side
+# Centering
+MIDDLE = WIDTH // 2
 LEFT_HALF_X = WIDTH // 4
-RIGHT_HALF_X = WIDTH // 2 + (WIDTH // 4)
+RIGHT_HALF_X = MIDDLE + (WIDTH // 4)
 MESSAGE_GAP = 10
 STACK_SPACING = 20
 MESSAGE_Y = TEXT_TOP + font.get_height() + MESSAGE_GAP + win_font.get_height() // 2
@@ -56,18 +57,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Pong Game')
 
 # Game States
-start_button = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
-start_button.centerx = WIDTH // 2
-start_button.centery = HEIGHT // 2
 game_state = 'menu'
-
-restart_button = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
-restart_button.centerx = WIDTH // 2
-restart_button.centery = MESSAGE_Y + STACK_GAP
-
-menu_button = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
-menu_button.centerx = WIDTH // 2
-menu_button.centery = restart_button.centery + BUTTON_HEIGHT + STACK_SPACING
 
 def reset_game():
     scoreboard.reset()
@@ -76,8 +66,8 @@ def reset_game():
     ball.reset()
 
 # Drawing Text function
-def draw_text(text, centerx, centery=None, top=TEXT_TOP, text_font=font):
-    text_img = text_font.render(text, True, WHITE_COLOR)
+def draw_text(text, centerx, centery=None, top=TEXT_TOP, text_font=font, color=WHITE_COLOR):
+    text_img = text_font.render(text, True, color)
     text_rect = text_img.get_rect()
     text_rect.centerx = centerx
     if centery is not None:
@@ -120,7 +110,7 @@ class Ball:
         self.reset()
 
     def reset(self):
-        self.rect.centerx = WIDTH // 2 + random.randint(-20, 20)
+        self.rect.centerx = MIDDLE + random.randint(-20, 20)
         self.rect.centery = HEIGHT // 2 + random.randint(-150, 150)
         self.speed_x = BALL_SPEED * random.choice([-1, 1])
         self.speed_y = random.randint(0, BALL_SPEED) * random.choice([-1, 1])
@@ -190,11 +180,44 @@ class Scoreboard:
             message = f"{side.capitalize()} player wins"
             message_x = LEFT_HALF_X if side == 'left' else RIGHT_HALF_X
             draw_text(message, message_x, centery=MESSAGE_Y, text_font=win_font)
+
+class Button:
+    def __init__(self, text, centerx, centery):
+        self.rect = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.rect.centerx = centerx
+        self.rect.centery = centery
+        self.text = text
     
+    def draw(self, screen):
+        hovered = pygame.mouse.get_pos()
+        if self.rect.collidepoint(hovered):
+            border_color = (110, 110, 110)
+            text_color = (20, 20, 20)
+            fill_color = (200, 200, 200)
+        else:
+            text_color = WHITE_COLOR
+            fill_color = BLACK_COLOR
+            border_color = WHITE_COLOR
+
+        pygame.draw.rect(screen, fill_color, self.rect)
+        pygame.draw.rect(screen, border_color, self.rect, BUTTON_BORDER)
+        draw_text(self.text, self.rect.centerx, centery=self.rect.centery, text_font=state_font, color=text_color)
+
+
+    def clicked(self, pos):
+        return self.rect.collidepoint(pos)
+
 left_paddle = Paddle(20, pygame.K_w, pygame.K_s)
 right_paddle = Paddle(WIDTH - 20 - PADDLE_WIDTH, pygame.K_UP, pygame.K_DOWN)
 ball = Ball()
 scoreboard = Scoreboard()
+
+# Buttons
+start_button = Button('START', MIDDLE, HEIGHT // 2)
+restart_button = Button('RESTART', MIDDLE, MESSAGE_Y + STACK_GAP)
+menu_button = Button('MAIN MENU', MIDDLE, restart_button.rect.centery + BUTTON_HEIGHT + STACK_SPACING)
+quit_button = Button('QUIT', MIDDLE, start_button.rect.centery + BUTTON_HEIGHT + STACK_SPACING)
+
 
 # --- GAME LOOP ---
 running = True
@@ -207,13 +230,16 @@ while running:
             running = False
 
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if game_state == 'menu' and start_button.collidepoint(event.pos):
-                game_state = 'playing'
+            if game_state == 'menu':
+                if start_button.clicked(event.pos):
+                    game_state = 'playing'
+                elif quit_button.clicked(event.pos):
+                    running = False
             elif game_state == 'game_over':
-                if restart_button.collidepoint(event.pos):
+                if restart_button.clicked(event.pos):
                     reset_game()
                     game_state = 'playing'
-                elif menu_button.collidepoint(event.pos):
+                elif menu_button.clicked(event.pos):
                     reset_game()
                     game_state = 'menu'
         
@@ -241,25 +267,22 @@ while running:
             game_state = 'game_over'
             winner_side = scoreboard.winner()
             if winner_side == 'left':
-                restart_button.centerx = LEFT_HALF_X
-                menu_button.centerx = LEFT_HALF_X
+                restart_button.rect.centerx = LEFT_HALF_X
+                menu_button.rect.centerx = LEFT_HALF_X
             else:
-                restart_button.centerx = RIGHT_HALF_X
-                menu_button.centerx = RIGHT_HALF_X
+                restart_button.rect.centerx = RIGHT_HALF_X
+                menu_button.rect.centerx = RIGHT_HALF_X
 
     # --- DRAWING ---
     screen.fill(BLACK_COLOR)
     
     if game_state == 'menu':
         # Draws the game title
-        draw_text('PONG', WIDTH // 2)
+        draw_text('PONG', MIDDLE)
 
         # Creates the start button 
-        pygame.draw.rect(screen, BLACK_COLOR, start_button)
-        pygame.draw.rect(screen, WHITE_COLOR, start_button, BUTTON_BORDER)
-        
-        # Draws the start button
-        draw_text('START', start_button.centerx, centery=start_button.centery, text_font=state_font)
+        start_button.draw(screen)
+        quit_button.draw(screen)
     else:
         # Draws the paddles 
         left_paddle.draw(screen)
@@ -273,18 +296,12 @@ while running:
 
         # Dashed line in the center
         for y in range(0, HEIGHT, DASH_STEP):
-            pygame.draw.line(screen, WHITE_COLOR, (WIDTH // 2, y), (WIDTH // 2, y + DASH_LENGTH), 2)
+            pygame.draw.line(screen, WHITE_COLOR, (MIDDLE, y), (MIDDLE, y + DASH_LENGTH), 2)
 
         if game_state == 'game_over':
             # Creates restart and main menu button
-            pygame.draw.rect(screen, BLACK_COLOR, restart_button)
-            pygame.draw.rect(screen, WHITE_COLOR, restart_button, BUTTON_BORDER)
-            pygame.draw.rect(screen, BLACK_COLOR, menu_button)
-            pygame.draw.rect(screen, WHITE_COLOR, menu_button, BUTTON_BORDER)
-
-            # Draws the restart and main menu button
-            draw_text('RESTART', restart_button.centerx, centery=restart_button.centery, text_font=state_font)
-            draw_text('MAIN MENU', menu_button.centerx, centery=menu_button.centery, text_font=state_font)
+            restart_button.draw(screen)
+            menu_button.draw(screen)
 
     pygame.display.flip()
 # --- CLEANUP ---
