@@ -49,6 +49,10 @@ start_button.centerx = WIDTH // 2
 start_button.centery = HEIGHT // 2
 game_state = 'start'
 
+restart_button = pygame.Rect(0, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
+restart_button.centerx = WIDTH // 2
+restart_button.centery = (HEIGHT // 2) + 80
+
 # Font
 font = pygame.font.Font('retro-font.ttf', 40)
 win_font = pygame.font.Font('retro-font.ttf', 30)
@@ -186,6 +190,12 @@ while running:
 
         if event.type == pygame.MOUSEBUTTONDOWN and game_state == 'start' and start_button.collidepoint(event.pos):
             game_state ='playing'
+
+        if event.type == pygame.MOUSEBUTTONDOWN and game_state == 'game_over' and restart_button.collidepoint(event.pos):
+            scoreboard.reset()
+            left_paddle.reset()
+            right_paddle.reset()
+            ball.reset()
     
     # --- UPDATE ---
     keys = pygame.key.get_pressed()
@@ -205,6 +215,9 @@ while running:
         if ball.rect.right > WIDTH:
             scoreboard.point_for('left')
             ball.reset()
+
+        if scoreboard.game_over:
+            game_state = 'game_over'
 
     # --- DRAWING ---
     screen.fill(BLACK_COLOR)
@@ -229,6 +242,13 @@ while running:
 
         # Draws the scoreboard
         scoreboard.draw()
+
+        if game_state == 'game_over':
+            # Creates restart button
+            pygame.draw.rect(screen, BLACK_COLOR, restart_button)
+            pygame.draw.rect(screen, WHITE_COLOR, restart_button, BUTTON_BORDER)
+
+            draw_text('RESTART', restart_button.centerx, centery=restart_button.centery, text_font=state_font)
 
         # Dashed line in the center
         for y in range(0, HEIGHT, DASH_STEP):
