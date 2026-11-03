@@ -64,6 +64,8 @@ overlay.fill(BLACK_COLOR)
 # Game States
 game_state = 'menu'
 running = True
+game_mode = 'two_player'
+difficulty = 'medium'
 
 def reset_game():
     scoreboard.reset()
@@ -232,6 +234,15 @@ pause_quit_button = Button('QUIT', MIDDLE, pause_menu_button.rect.centery + STEP
 # Settings Button
 # settings_button will do later
 
+# Game mode buttons
+one_player_button = Button('ONE PLAYER', MIDDLE, HEIGHT // 2)
+two_player_button = Button('TWO PLAYER', MIDDLE, one_player_button.rect.centery + STEP)
+
+# Difficulty buttons
+medium_button = Button('MEDIUM', MIDDLE, HEIGHT // 2)
+easy_button = Button('EASY', MIDDLE, medium_button.rect.centery - STEP)
+hard_button = Button('HARD', MIDDLE, medium_button.rect.centery + STEP)
+
 # --- GAME LOOP ---
 while running:
     clock.tick(60)
@@ -245,12 +256,12 @@ while running:
                 if game_state == 'playing':
                     game_state = 'paused'
                 elif game_state == 'paused':
-                    game_state == 'playing'
+                    game_state = 'playing'
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if game_state == 'menu':
                 if start_button.clicked(event.pos):
-                    game_state = 'playing'
+                    game_state = 'mode_select'
                 elif quit_button.clicked(event.pos):
                     running = False
             elif game_state == 'game_over':
@@ -268,7 +279,25 @@ while running:
                 elif pause_menu_button.clicked(event.pos):
                     reset_game()
                     game_state = 'menu'
-        
+            elif game_state == 'mode_select':
+                if one_player_button.clicked(event.pos):
+                    game_mode = 'one_player'
+                    game_state = 'difficulty'
+                elif two_player_button.clicked(event.pos):
+                    game_mode = 'two_player'
+                    game_state = 'playing'
+            elif game_state == 'difficulty':
+                if easy_button.clicked(event.pos):
+                    difficulty = 'easy'
+                    game_state = 'playing'
+                elif medium_button.clicked(event.pos):
+                    difficulty = 'medium'
+                    game_state = 'playing'
+                elif hard_button.clicked(event.pos):
+                    difficulty = 'hard'
+                    game_state = 'playing'
+                
+            
     
     # --- UPDATE ---
     keys = pygame.key.get_pressed()
@@ -309,6 +338,17 @@ while running:
         # Creates the start button 
         start_button.draw(screen)
         quit_button.draw(screen)
+    elif game_state == 'mode_select':
+        draw_text('PONG', MIDDLE)
+        draw_text('SELECT MODE', MIDDLE, centery=MESSAGE_Y)
+
+        one_player_button.draw(screen)
+        two_player_button.draw(screen)
+    elif game_state == 'difficulty':
+        draw_text('SELECT DIFFICULTY', MIDDLE, centery=MESSAGE_Y)
+        easy_button.draw(screen)
+        medium_button.draw(screen)
+        hard_button.draw(screen)
     else:
         # Draws the paddles 
         left_paddle.draw(screen)
