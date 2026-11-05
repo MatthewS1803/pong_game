@@ -1,5 +1,13 @@
 import pygame
-from settings import *
+from settings import (
+    WIDTH,
+    HEIGHT,
+    TEXT_TOP,
+    MESSAGE_GAP,
+    STACK_SPACING,
+    BUTTON_HEIGHT,
+    WHITE_COLOR
+)
 
 pygame.init()
 

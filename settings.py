@@ -36,7 +36,7 @@ WHITE_COLOR = (255, 255, 255)
 BLACK_COLOR = (0, 0, 0)
 
 # Winning Score 
-WINNING_SCORE = 2
+WINNING_SCORE = 11
 
 # Centering
 MIDDLE = WIDTH // 2
