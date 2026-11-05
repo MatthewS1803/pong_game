@@ -24,7 +24,14 @@ DASH_STEP = 30
 # Paddle Constants
 PADDLE_HEIGHT = 100
 PADDLE_WIDTH = 15
-PADDLE_SPEED = 5
+PADDLE_SPEED = 7
+
+# AI Constants
+AI_SETTINGS = {
+    'easy': {'speed': 3, 'error': 40},
+    'medium': {'speed': 5, 'error': 25},
+    'hard': {'speed': PADDLE_SPEED, 'error': 10}
+}
 
 # Button Constants
 BUTTON_WIDTH = 200
@@ -67,6 +74,7 @@ running = True
 game_mode = 'two_player'
 difficulty = 'medium'
 
+
 def reset_game():
     scoreboard.reset()
     left_paddle.reset()
@@ -90,6 +98,7 @@ class Paddle:
         self.rect = pygame.Rect(x, 0, PADDLE_WIDTH, PADDLE_HEIGHT)
         self.up = up
         self.down = down
+        self.aim_offset = 0
         self.reset()
 
     def reset(self):
@@ -102,11 +111,24 @@ class Paddle:
         if keys[self.down]:
             self.rect.y += PADDLE_SPEED
 
+        self.clamp()
+
+    def follow(self, ball_rect, speed):
+        target = ball_rect.centery + self.aim_offset
+        gap = target - self.rect.centery
+        step = min(gap, speed)
+        step = max(step, -speed)
+
+        self.rect.y += step
+        self.clamp()
+
+    def clamp(self):
         if self.rect.y < 0:
             self.rect.y = 0
-
+        
         if self.rect.bottom > HEIGHT:
             self.rect.bottom = HEIGHT
+        
 
     def draw(self, screen):
         pygame.draw.rect(screen, WHITE_COLOR, self.rect)
@@ -149,6 +171,8 @@ class Ball:
                 self.speed_x = max(self.speed_x, -MAX_BALL_SPEED_X)
                 self.rect.right = paddle.left
             self.speed_y = self.hit_angle(paddle)
+            return True
+        return False
 
     def draw(self, screen):
         pygame.draw.rect(screen, WHITE_COLOR, self.rect)
@@ -304,11 +328,19 @@ while running:
 
     if game_state == 'playing':
         left_paddle.move(keys)
-        right_paddle.move(keys)
+
+        if game_mode == 'two_player':
+            right_paddle.move(keys)
+        else:
+            right_paddle.follow(ball.rect, AI_SETTINGS[difficulty]['speed'])
 
         ball.move()
-        ball.bounce_off_paddle(left_paddle.rect)
+        hit = ball.bounce_off_paddle(left_paddle.rect)
         ball.bounce_off_paddle(right_paddle.rect)
+
+        if hit and game_mode == 'one_player':
+            error = AI_SETTINGS[difficulty]['error']
+            right_paddle.aim_offset = random.randint(-error, error)
 
         if ball.rect.left < 0:
             scoreboard.point_for('right')
