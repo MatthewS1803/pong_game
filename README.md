@@ -4,9 +4,8 @@ A classic Pong game built in Python with **pygame**. Play against a friend in 2-
  
 ## Gameplay Preview
  
-![Gameplay screenshot](screenshots/gameplay.png)
+![Gameplay screenshot](screenshots/pong_gameplay.png)
  
-<!-- Add a screenshot or GIF at screenshots/gameplay.png (a GIF of a rally works best). -->
  
 ## Features
  
